@@ -1,4 +1,4 @@
-# Peri Akiva
+# Peri Akiva, Arpit Shah
 
 import json
 import sys
