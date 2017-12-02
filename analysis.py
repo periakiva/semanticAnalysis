@@ -3,7 +3,7 @@
 import json
 import sys
 from textblob import TextBlob
-
+#sup
 # scrap from website for comparison
 def getApprovalRatings(jsonFile):
     pass
