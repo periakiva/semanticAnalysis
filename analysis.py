@@ -37,18 +37,16 @@ df = csvToDataFrame('/home/native/projects/semanticImpactAnalysis/approval_polll
 df = DFDuplicateHandle(df)
 #df.to_csv('cleanPollData.csv')
 #print DFtoDict(df)
-def plotDF(df):
+def plotDF(df,x,y):
     #df['enddate'] = pd.to_datetime(df['enddate'])
     fig = plt.figure()
     plot = fig.add_subplot(111)
 
     def on_plot_hover(event):
-
         #x= event.xdata
         print event
-
-
-
+    plot.plot_date(x,y,'y-',linewidth=0.5)
+    #plot.plot_date(dic.keys(),dic.values(),'y-',linewidth=0.5)
     plot.plot_date(df['enddate'],df['adjusted_approve'],'b-',linewidth=0.4)
     plot.plot_date(df['enddate'],df['adjusted_disapprove'],'r-',linewidth=0.4)
     plot.grid(color='black',linestyle='-',linewidth=0.1)
@@ -60,31 +58,36 @@ def plotDF(df):
     annot.set_visible(False)
     fig.canvas.mpl_connect('motion_notify_event',on_plot_hover)
     plt.show()
-#plotDF(df)
 
 
 def impactForText(string):
     text = TextBlob(string)
     polarity = text.sentiment.polarity
-    if polarity>0:
-        return polarity
-    if polarity<0:
-        return polarity
+    if polarity!=0:
+        return polarity*len(re.sub("[^\w]"," ",string).split())*100
     return 0
+
 print impactForText('i hate sushi') 
 print impactForText('evil') 
-print impactForText('i hate sushi') 
-print impactForText('i hate sushi') 
-print impactForText('i hate sushi') 
+print impactForText('bad') 
+print impactForText('bad') 
+print impactForText('evil bad bad') 
+
 def impactForList(tweets):
     # overAll is an approval index ranging from 0-100
+
     overAll = 0
     for i in tweets:
-#        print impactForText(i)
+        #print impactForText(i)
         overAll+=impactForText(i)
-    # normalize the data
-    overAll=(overAll+100)/2
-    return overAll
+    #normalize the data
+    #overAll=(overAll+100)/2
+    if overAll<=-2000:
+        return -2000
+    elif overAll>=2000:
+        return 2000
+    else:
+        return overAll
 
 def impactForData(dic):
     impactDict = {}
@@ -94,10 +97,23 @@ def impactForData(dic):
     return impactDict
 
 trumpTweets = p.load(open("trumps_tweets_dict.p","rb"))
-#x= impactForData(trumpTweets)
-#print x.values()
+x= impactForData(trumpTweets)
+keys = sorted(x.iterkeys())
+maxi = max(x.values())
+mini = min(x.values())
+for key in sorted(x.keys()):
+    print "%s : %s" % (key,x[key])
+xnew={}
+for key in sorted(x.keys()):
+    xnew[key]=x[key]+(-mini)
+    xnew[key]=int((xnew[key]/(-mini))*100)/2
+#for key in sorted(xnew.keys()):
+#    print "%s : %s" % (key,xnew[key])
+print xnew
+print min(xnew.values())
+plotDF(df,sorted(xnew.keys()),[xnew[key] for key in sorted(xnew.keys())])
 #print np.mean(x.values())
-tdp = {'day1':['i hate sushi','work with me here','trump is evil','why are you killing me'],'day2':['evil hate dislike shit no bad']}
+#tdp = {'day1':['i hate sushi','work with me here','trump is evil','why are you killing me'],'day2':['evil hate dislike shit no bad']}
 #print impactForData(tdp)
 #print impactForData(tpd)
 #tw = ["i hate sushi","i love europe","trump is not good for america","where is my phone?"]
