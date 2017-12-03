@@ -42,9 +42,20 @@ def plotDF(df,x,y):
     fig = plt.figure()
     plot = fig.add_subplot(111)
 
+    def movingAvg(y):
+        ynew=[50]
+        ySum=50
+        for i,k in zip(range(1,len(y)),y):
+            ySum+=y[i]
+            ynew.append(ySum/(i+1))
+        return ynew
+
+    ynew=movingAvg(y)
+
     def on_plot_hover(event):
         #x= event.xdata
         print event
+    plot.plot_date(x,ynew,'r-',linewidth=0.5)
     plot.plot_date(x,y,'y-',linewidth=0.5)
     #plot.plot_date(dic.keys(),dic.values(),'y-',linewidth=0.5)
     plot.plot_date(df['enddate'],df['adjusted_approve'],'b-',linewidth=0.4)
