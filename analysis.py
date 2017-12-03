@@ -1,4 +1,13 @@
 # Peri Akiva, Arpit Shah
+import os
+from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS as stopwords
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics import accuracy_score
+from sklearn.base import TransformerMixin
+from sklearn.pipeline import Pipeline
+from sklearn.svm import LinearSVC
+#from spacy.en import English
+import spacy
 import re
 import pickle as p
 import peakutils
@@ -11,7 +20,69 @@ import json
 import numpy as np
 import sys
 from textblob import TextBlob
+import string
 
+parser = spacy.load('en')
+punctuations = string.punctuation
+class predictors(TransformerMixin):
+    def transform(self,X,**transform_params):
+        return [clean_text(text) for text in X]
+    def fit(self,X,y=None,**fit_params):
+        return self
+    def get_params(self,deep=True):
+        return {}
+
+def clean_text(text):
+    return text.strip().lower()
+def spacy_tokenizer(sentence):
+    tokens = parser(sentence)
+    tokens = [tok.lemma_.lower().strip() if tok.lemma_!="-PRON-" else tok.lower_ for tok in tokens]
+    tokens = [tok for tok in tokens if (tok not in stopwords and tok not in punctuations)]
+    return tokens
+vectorizer = CountVectorizer(tokenizer = spacy_tokenizer,ngram_range=(1,1))
+classifier=LinearSVC()
+pipe = Pipeline([("cleaner",predictors()),('vectorizer',vectorizer),('classifier',classifier)])
+
+def csvToListTuples(csvPath):
+    df = pd.read_csv(csvPath,usecols=['Sentiment','SentimentText'])
+    labeledData=[(row['SentimentText'],row['Sentiment']) for index,row in df.iterrows()]
+    with open('labeledData.pkl','wb') as f:
+        p.dump(labeledData,f)
+    return labeledData
+
+if os.path.exists('labeledData.pkl'):
+    with open('labeledData.pkl','rb') as f:
+        labeledData = p.load(f)
+else:
+    labeledData = csvToListTuples('/home/native/projects/semanticImpactAnalysis/SemAnLabeled.csv')
+#print labeledData
+
+if os.path.getsize('labeledData.pkl')<10:
+    os.remove('labeledData.pkl')
+def splitData(labeledData):
+    trainLabeled=[]
+    testLabeled=[]
+    n=0
+    for i in labeledData:
+        if n%10==0:
+            testLabeled.append(i)
+        else:
+            trainLabeled.append(i)
+        n=n+1
+    return trainLabeled,testLabeled
+
+train,test = splitData(labeledData)
+#print train[:10]
+#print test[:10]
+#print len(train)
+#print len(test)
+pipe.fit([x[0] for x in train],[x[1] for x in train])
+pred_data = pip.predict([x[0] for x in test])
+for (sample,pred) in zip(test,pred_data):
+    print sample,pred
+print "Accuracy: ", accuracy_score([x[1] for x in test], pred_data)
+
+#print labeledData
 
 """
 def DFtoDict(df):
@@ -33,8 +104,8 @@ def DFDuplicateHandle(df):
 def csvToDataFrame(pathToCsv):
     return pd.read_csv(pathToCsv,usecols=['startdate','enddate','pollster','adjusted_approve','adjusted_disapprove'])
 
-df = csvToDataFrame('/home/native/projects/semanticImpactAnalysis/approval_polllist.csv')
-df = DFDuplicateHandle(df)
+#df = csvToDataFrame('/home/native/projects/semanticImpactAnalysis/approval_polllist.csv')
+#df = DFDuplicateHandle(df)
 #df.to_csv('cleanPollData.csv')
 #print DFtoDict(df)
 def plotDF(df,x,y):
@@ -55,12 +126,12 @@ def plotDF(df,x,y):
     def on_plot_hover(event):
         #x= event.xdata
         print event
-    plot.plot_date(x,ynew,'r-',linewidth=0.5)
-    plot.plot_date(x,y,'y-',linewidth=0.5)
-    #plot.plot_date(dic.keys(),dic.values(),'y-',linewidth=0.5)
-    plot.plot_date(df['enddate'],df['adjusted_approve'],'b-',linewidth=0.4)
-    plot.plot_date(df['enddate'],df['adjusted_disapprove'],'r-',linewidth=0.4)
+    plot.plot_date(x,ynew,'k--',linewidth=0.9,label='Moving Average of Trump Tweets')
+    plot.plot_date(x,y,'y-',linewidth=0.5,label='Trump Tweets')
+    plot.plot_date(df['enddate'],df['adjusted_approve'],'b-',linewidth=0.4,label='Adjusted Approval')
+    plot.plot_date(df['enddate'],df['adjusted_disapprove'],'r-',linewidth=0.4,label='Adjusted Disapproval')
     plot.grid(color='black',linestyle='-',linewidth=0.1)
+    plt.legend(bbox_to_anchor=(0.,1.02,1.,-1.85),loc=10,ncol=2,borderaxespad=0.)
     plt.xlabel('Date')
     plt.ylabel('Approval/Disapproval Rate')
     plt.ylim(0,100,5)
@@ -107,6 +178,7 @@ def impactForData(dic):
     # returns approval index per day of tweets
     return impactDict
 
+"""
 trumpTweets = p.load(open("trumps_tweets_dict.p","rb"))
 x= impactForData(trumpTweets)
 keys = sorted(x.iterkeys())
@@ -129,3 +201,4 @@ plotDF(df,sorted(xnew.keys()),[xnew[key] for key in sorted(xnew.keys())])
 #print impactForData(tpd)
 #tw = ["i hate sushi","i love europe","trump is not good for america","where is my phone?"]
 #print impactForList(tw)
+"""
