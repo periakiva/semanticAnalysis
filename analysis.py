@@ -39,12 +39,16 @@ def spacy_tokenizer(sentence):
     tokens = [tok.lemma_.lower().strip() if tok.lemma_!="-PRON-" else tok.lower_ for tok in tokens]
     tokens = [tok for tok in tokens if (tok not in stopwords and tok not in punctuations)]
     return tokens
+
 vectorizer = CountVectorizer(tokenizer = spacy_tokenizer,ngram_range=(1,1))
-classifier=LinearSVC()
+classifier=LinearSVC(verbose=True)
 pipe = Pipeline([("cleaner",predictors()),('vectorizer',vectorizer),('classifier',classifier)])
 
 def csvToListTuples(csvPath):
     df = pd.read_csv(csvPath,usecols=['Sentiment','SentimentText'])
+    rejects=['&','http']
+    df = df[df.SentimentText.str.contains("&") == False]
+    df = df[df.SentimentText.str.contains("http") == False]
     labeledData=[(row['SentimentText'],row['Sentiment']) for index,row in df.iterrows()]
     with open('labeledData.pkl','wb') as f:
         p.dump(labeledData,f)
@@ -59,6 +63,7 @@ else:
 
 if os.path.getsize('labeledData.pkl')<10:
     os.remove('labeledData.pkl')
+
 def splitData(labeledData):
     trainLabeled=[]
     testLabeled=[]
