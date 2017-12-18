@@ -362,6 +362,20 @@ for i in sorted(all_tweets_catagory_dict.keys()):
         except KeyError:
             cat_plot[j] = {i: all_tweets_catagory_dict[i][j]}
     
+with open('trump_tweets_category_dict.pkl','rb') as f:
+    trump_tweets_category_dict = p.load(f)
+
+trump_cat_plot={}
+
+for i in sorted(trump_tweets_category_dict.keys()):
+#     [cat_plot[i]=]
+    for j in trump_tweets_category_dict[i].keys():
+        try:
+            trump_cat_plot[j][i] = trump_tweets_category_dict[i][j]
+        except KeyError:
+            trump_cat_plot[j] = {i: trump_tweets_category_dict[i][j]}
+   
+
 
 
 # In[292]:
@@ -498,6 +512,10 @@ plotDF(df,_dict_second=all_tweets_index_track,data_second_label="Public",title="
 plotDF(df,_dict_second = all_tweets_index_track,data_second_label="Public",cat_plot=cat_plot,topic="Fake news",title="Fake News Mentions in Public Tweets vs Public Sentiment")
 plotDF(df,_dict_second = all_tweets_index_track,data_second_label="Public",cat_plot=cat_plot,topic="Russia Scandal",title="Russia Scandal Mentions in Public Tweets vs Public Sentiment")
 plotDF(df,_dict_second = all_tweets_index_track,data_second_label="Public",cat_plot=cat_plot,topic="Travel Ban & NYTimes",title="Travel Ban Mentions in Public Tweets vs Public Sentiment")
+
+plotDF(df,_dict_second = all_tweets_index_track,data_second_label="Public",cat_plot=trump_cat_plot,topic="Fake news",title="Fake news Mentions in Trump Tweets vs Public Sentiment")
+plotDF(df,_dict_second = all_tweets_index_track,data_second_label="Public",cat_plot=trump_cat_plot,topic="Crooked Hillary + Russia",title="Crooked Hillary and Russia Mentions in Trump Tweets vs Public Sentiment")
+plotDF(df,_dict_second = all_tweets_index_track,data_second_label="Public",cat_plot=trump_cat_plot,topic="NFL",title="NFL Mentions in Trump Tweets vs Public Sentiment")
 
 #print np.mean(x.values())
 #tdp = {'day1':['i hate sushi','work with me here','trump is evil','why are you killing me'],'day2':['evil hate dislike shit no bad']}
